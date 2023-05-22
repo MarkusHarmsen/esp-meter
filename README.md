@@ -11,7 +11,13 @@ On top of that, I also emulate an Eastron SDM230 via Modbus to be able to limit 
 
 Disclaimer: this project does not claim to be a full product but is rather a place to document and share my findings in case anybody is interested.
 
+### Screenshots from Home Assistant
+
 ![Home Assistant Energy Dashboard](docs/home_assistant_screenshot.png)
+
+### Schematics
+
+![Badly laid out schematics](docs/esp_meter.svg)
 
 # Plugins
 
