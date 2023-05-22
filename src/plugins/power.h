@@ -77,6 +77,10 @@ class PowerMeter: public Meter {
     float currentVoltagePhase3 = 0;
     unsigned long seconds = 0;
 
+    const char *UNIT_KWH = "kWh";
+    const char *UNIT_W = "W";
+    const char *UNIT_V = "V";
+
     RunningMedian samplesReadingsIn = RunningMedian(5);
     RunningMedian samplesReadingsOut = RunningMedian(5);
 

@@ -108,118 +108,114 @@ void PowerMeter::receivedMessage() {
   // The smart meter opens a package with its "ID" like "/EBZ5DD32R06ETA_106"
   if (*buffer == '/') { return; }
 
-  // The smart meter sends a single "!" at the end of each messages package (all entries send once)
+  // The smart meter sends a single "!" at the end of each messages package (after all entries send once)
   if (*buffer == '!') { return; }
+
+  // Each message has a "-" and a ":" at a fixed place
+  if (buffer[1] != '-' || buffer[3] != ':') { return; }
 
   auto length = strlen(buffer);
 
   // Quick check: has to end with ")"
-  if (buffer[length - 1] != ')') {
-    return;
-  }
+  if (buffer[length - 1] != ')') { return; }
+
+  // The 4th character seems to distinguish most valid messages which makes it handy for a quick check.
+  // This allows us to skip most strncmp calls.
+  char quickCheck = buffer[4];
 
   // Eigentumsnummer: 1-0:0.0.0*255(1EBZ0100012345)
-  if (strncmp(buffer, "1-0:0.0.0*255", 13) == 0) {
+  if (quickCheck == '0' && strncmp(buffer, "1-0:0.0.0*255", 13) == 0) {
     return;
   }
 
   // Geräte-Identifikation: 1-0:96.1.0*255(1EBZ0100012345)
-  if (strncmp(buffer, "1-0:96.1.0*255", 14) == 0) {
+  if (quickCheck == '9' && strncmp(buffer, "1-0:96.1.0*255", 14) == 0) {
     return;
   }
 
   // Zählerstand zu +A, tariflos: 1-0:1.8.0*255(000054.51235604*kWh)
-  if (strncmp(buffer, "1-0:1.8.0*255", 13) == 0) {
-    if (parseObisFloatFromBuffer(buffer + 14, readingsIn, 6, 8, false, "kWh")) {
+  if (quickCheck == '1' && strncmp(buffer, "1-0:1.8.0*255", 13) == 0) {
+    if (parseObisFloatFromBuffer(buffer + 14, readingsIn, 6, 8, false, UNIT_KWH)) {
       samplesReadingsIn.add(readingsIn);
       setDirty();
-      return;
     }
     return;
   }
 
   // Zählerstand zu -A, tariflos: 1-0:2.8.0*255(000054.51235604*kWh)
-  if (strncmp(buffer, "1-0:2.8.0*255", 13) == 0) {
-    if(parseObisFloatFromBuffer(buffer + 14, readingsOut, 6, 8, false, "kWh")) {
+  if (quickCheck == '2' && strncmp(buffer, "1-0:2.8.0*255", 13) == 0) {
+    if(parseObisFloatFromBuffer(buffer + 14, readingsOut, 6, 8, false, UNIT_KWH)) {
       samplesReadingsOut.add(readingsOut);
       setDirty();
-      return;
     }
     return;
   }
 
   // Summe der Momentan-Leistungen in allen Phasen: 1-0:16.7.0*255(000164.30*W)
   // Negative:                                      1-0:16.7.0*255(-000079.54*W)
-  if (strncmp(buffer, "1-0:16.7.0*255", 14) == 0) {
-    if (parseObisFloatFromBuffer(buffer + 15, currentPower, 6, 2, true, "W")) {
+  if (quickCheck == '1' && strncmp(buffer, "1-0:16.7.0*255", 14) == 0) {
+    if (parseObisFloatFromBuffer(buffer + 15, currentPower, 6, 2, true, UNIT_W)) {
       currentPowerUpdated = true;
       setDirty();
-      return;
     }
     return;
   }
 
   // Momentane Leistung in Phase L1: 1-0:36.7.0*255(000164.30*W)
-  if (strncmp(buffer, "1-0:36.7.0*255", 14) == 0) {
-    if (parseObisFloatFromBuffer(buffer + 15, currentPowerPhase1, 6, 2, true, "W")) {
+  if (quickCheck == '3' && strncmp(buffer, "1-0:36.7.0*255", 14) == 0) {
+    if (parseObisFloatFromBuffer(buffer + 15, currentPowerPhase1, 6, 2, true, UNIT_W)) {
       setDirty();
-      return;
     }
     return;
   }
 
   // Momentane Leistung in Phase L2: 1-0:56.7.0*255(000164.30*W)
-  if (strncmp(buffer, "1-0:56.7.0*255", 14) == 0) {
-    if (parseObisFloatFromBuffer(buffer + 15, currentPowerPhase2, 6, 2, true, "W")) {
+  if (quickCheck == '5' && strncmp(buffer, "1-0:56.7.0*255", 14) == 0) {
+    if (parseObisFloatFromBuffer(buffer + 15, currentPowerPhase2, 6, 2, true, UNIT_W)) {
       setDirty();
-      return;
     }
     return;
   }
 
   // Momentane Leistung in Phase L3: 1-0:76.7.0*255(000164.30*W)
-  if (strncmp(buffer, "1-0:76.7.0*255", 14) == 0) {
-    if (parseObisFloatFromBuffer(buffer + 15, currentPowerPhase3, 6, 2, true, "W")) {
+  if (quickCheck == '7' && strncmp(buffer, "1-0:76.7.0*255", 14) == 0) {
+    if (parseObisFloatFromBuffer(buffer + 15, currentPowerPhase3, 6, 2, true, UNIT_W)) {
       setDirty();
-      return;
     }
     return;
   }
 
   // Spannung in Phase L1: 1-0:32.7.0*255(231.2*V)
-  if (strncmp(buffer, "1-0:32.7.0*255", 14) == 0) {
-    if (parseObisFloatFromBuffer(buffer + 15, currentVoltagePhase1, 3, 1, false, "V")) {
+  if (quickCheck == '3' && strncmp(buffer, "1-0:32.7.0*255", 14) == 0) {
+    if (parseObisFloatFromBuffer(buffer + 15, currentVoltagePhase1, 3, 1, false, UNIT_V)) {
       setDirty();
-      return;
     }
     return;
   }
 
   // Spannung in Phase L2: 1-0:52.7.0*255(231.2*V)
-  if (strncmp(buffer, "1-0:52.7.0*255", 14) == 0) {
-    if (parseObisFloatFromBuffer(buffer + 15, currentVoltagePhase2, 3, 1, false, "V")) {
+  if (quickCheck == '5' && strncmp(buffer, "1-0:52.7.0*255", 14) == 0) {
+    if (parseObisFloatFromBuffer(buffer + 15, currentVoltagePhase2, 3, 1, false, UNIT_V)) {
       setDirty();
-      return;
     }
     return;
   }
   
   // Spannung in Phase L3: 1-0:72.7.0*255(231.2*V)
-  if (strncmp(buffer, "1-0:72.7.0*255", 14) == 0) {
-    if (parseObisFloatFromBuffer(buffer + 15, currentVoltagePhase3, 3, 1, false, "V")) {
+  if (quickCheck == '7' && strncmp(buffer, "1-0:72.7.0*255", 14) == 0) {
+    if (parseObisFloatFromBuffer(buffer + 15, currentVoltagePhase3, 3, 1, false, UNIT_V)) {
       setDirty();
-      return;
     }
     return;
   }
 
   // Statuswort: 1-0:96.5.0*255(001C4104)
-  if (strncmp(buffer, "1-0:96.5.0*255", 14) == 0 && length == 24) {
+  if (quickCheck == '9' && strncmp(buffer, "1-0:96.5.0*255", 14) == 0 && length == 24) {
     return;
   }
 
   // Sekundenindex: 0-0:96.8.0*255(09F596C0)
-  if (strncmp(buffer, "0-0:96.8.0*255", 14) == 0 && length == 24) {
+  if (quickCheck == '9' && strncmp(buffer, "0-0:96.8.0*255", 14) == 0 && length == 24) {
     seconds = strtol(buffer + 15, NULL, 16);
     setDirty();
     return;
