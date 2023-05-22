@@ -77,3 +77,7 @@ The Growatt inverter can use the Modbus to communicate to SDM power meters. This
 #### Known issues
 
 While the general data looks fine on Growatt Cloud (and export limiting works), the inverter seems to overshoot quite some times and bounces around the limit.
+
+![Growatt cloud](docs/growatt_data_overview.png)
+
+![Growatt cloud shows detected meter](docs/growatt_meter.png)
