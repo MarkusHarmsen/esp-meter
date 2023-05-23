@@ -13,7 +13,7 @@
 #define METER_GAS true
 #define METER_POWER true
 #define EASTRON_SIMULATOR defined(ESP32) && true
-#define EASTRON_SIMULATOR_CAP_MIN -350
+#define EASTRON_SIMULATOR_CAP_MIN -320
 
 #include "secrets.h"
 #ifndef SECRETS
